@@ -238,14 +238,51 @@ db.zipcode.aggregate([ {
 ```
 * note: If you don't mention a key, it is not included, except for _id, which must be explicitly suppressed. If you want to include a key exactly as it is named in the source document, you just write key:1, where key is the name of the key. You will probably get more out of this quiz is you download the zips.json file and practice in the shell. zips.json link is in the using $sum quiz
 
-# Using $match
+# Using $match (zipcodes.js)
 * performs a filtering (n:1) - if document matches the criteria it will push it to the next stage of the pipeline
+* find population for each city in California (CA) and its zip codes
+  1. filter on 'state': "CA"
+  2. group on city (sum on population and add zip codes)
+```javascript
+db.zipcode.aggregate([{
+    $match : { state : "CA"}},
+    {
+    $group : {
+        _id : "$city",
+        population : {$sum : "$pop"},
+        zip_codes : {$addToSet: $_id}}
+    }
+])
+```
+* quiz: Write an aggregation query with a single match phase that filters for zipcodes with greater than 100,000 people.
+```javascript
+db.zipcode.aggregate([ {$match : { pop : {$gt : 100000}}}])
+```
 
+* note: $match (and $sort) is that they can use indexes, but only if done at the beginning of the aggregation pipeline
 
+# Using $sort (zipcodes.js)
+* disk sorting
+* memory based sorting (default) - limit 100MB for any given pipeline stage
+* before or after the grouping stage
+* example: show population per city in state NY sorted from largest to smallest
+```javascript
+db.zipcode.aggregate([ {$match : {state : "NY"}}, {$group : { _id : "$city", population : {$sum : "$pop"}}}, {$project: {_id : 0, city : "$_id", population: 1}}, {$sort : {population : -1}}])
+```
+* quiz: Write an aggregation query with just a sort stage to sort by (state, city), both ascending.
+```javascript
+db.zipcode.aggregate([ {$sort : { state : 1, city : 1}}])
+```
 
+# Using $limit and $skip
+* make sense only if you first do the sory
+* make sense only first to $skip then to $limit
+* example:
+```javascript
+db.zipcode.aggregate([ {$match : {state : "NY"}}, {$group : { _id : "$city", population : {$sum : "$pop"}}}, {$project: {_id : 0, city : "$_id", population: 1}}, {$sort : {population : -1}}, {$skip : 10}, {$limit: 5}])
+```
 
-
-
+# Revisiting $first and $last
 
 
 
