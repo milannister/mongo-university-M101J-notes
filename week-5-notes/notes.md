@@ -282,18 +282,34 @@ db.zipcode.aggregate([ {$sort : { state : 1, city : 1}}])
 db.zipcode.aggregate([ {$match : {state : "NY"}}, {$group : { _id : "$city", population : {$sum : "$pop"}}}, {$project: {_id : 0, city : "$_id", population: 1}}, {$sort : {population : -1}}, {$skip : 10}, {$limit: 5}])
 ```
 
-# Revisiting $first and $last
+# Revisiting $first and $last (zipcodes.js)
 
+* find largest city in each state, phases:
+  1. get the population of every city in every state
+  2. sort by state, population
+  3. group by state, get the first item in each group
+  4. sort by state (which in _id)
 
+```javascript
+db.zipcode.aggregate([ {$group : {_id : {state : "$state", city : "$city"},  population : {$sum : "$pop"}}}, {$sort : {"_id.state" : 1, "population" : -1}}, {$group : {_id : "$_id.state", city : {$first : "$_id.city"}, population : {$first : "$population"}}}, {$sort : {"_id" : 1}}])
+```
 
+# Using $unwind
 
+* used to flatten the arrays (creates one document for each element in the array)
 
+# $unwind example (posts.json)
 
-
-
-
-
-
+* find how many times each tag appears in the posts
+  * $unwind by tags
+  * group by tag and count each tag
+  * sort by popularity
+  * limit to 10
+  * change the name to be tag
+```javascript
+db.posts.aggregate([ {$unwind : "$tags"}, {$group : {"_id" : "$tags", count : {$sum : 1}}}, {$sort : {count : -1}}, {$limit : 10}, {$project : {tag : "$_id", count : 1, "_id" : 0}}])
+```
+* note : $push can be used to reverse the effect of $unwind
 
 
 
