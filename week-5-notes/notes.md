@@ -350,6 +350,56 @@ db.inventory.aggregate([
     }
 ])
 ```
+# Mapping between SQL and Aggregation
+
+* WHERE - $match
+* GROUP BY - $group
+* HAVING - $match
+* SELECT - $project
+* ORDER BY - $sort
+* LIMIT - $limit
+* SUM - $sum
+* COUNT - $count
+* join - N/A
+
+# Some Common SQL Examples
+
+* see [documentation](https://docs.mongodb.org/manual/reference/sql-comparison)
+
+# Limitations of Aggregation Framework
+
+* 100MB for pipeline stages - solve with `allowDiskUse`
+* 16MB limit for single document (might be problem if result should be returned in single document, which is default in python - solution for pyhtno init `curs = {}`)
+* sharded - group by, sort -> returns data to the primary shard -> performance of agregation framework on sharded system are not as good as they are for, say, hadoop
+  * can be used hadoop connector
+  * mongo's map/reduce - not recommanded
+
+# Aggregation Framework with Java Driver (zipcodes.js)
+```Java
+List<Document> pipeline;
+pipeline = Arrays.asList(new Document("$group", new Document("_id", "$state").append("totalPop", new Document("$sum", "$pop"))),
+                        new Document("$match", new Document("totalPop", new Docuement("$gte", 10000000))));
+List<Document> results = collection.aggregate(pipeline).into(new ArrayList<Document>());
+```
+or better to use Document.parse(String) for this kind of queries:
+```Java
+pipeline = Arrays.asList(Document.parse("{ $group: { _id : \"$state\", totalPop: { $sum: \"$pop\" }}}"),
+                        Document.parse("{ $match: { totalPop : { $gte: 10000000 }}}"));
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
