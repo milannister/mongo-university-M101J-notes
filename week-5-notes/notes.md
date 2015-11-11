@@ -311,7 +311,45 @@ db.posts.aggregate([ {$unwind : "$tags"}, {$group : {"_id" : "$tags", count : {$
 ```
 * note : $push can be used to reverse the effect of $unwind
 
+# Double $unwind (inventory.js)
 
+* used for more than one array in a document
+* find number of products available in any given size of color regardless of name of the product
+```javascript
+db.inventory.aggregate([ {$unwind: "$sizes"}, {$unwind: "$colors"}, {$group :  { "_id" : {"size": "$sizes", "color" : "$colors"}, "count" : {$sum : 1}}}])
+```
+
+* note: two pushes in a row can be used to reverse effect of double $unwind
+```javascript
+db.inventory.aggregate([
+    {$unwind: "$sizes"},
+    {$unwind: "$colors"},
+    /* create the color array */
+    {$group: 
+     {
+	'_id': {name:"$name",size:"$sizes"},
+	 'colors': {$push: "$colors"},
+     }
+    },
+    /* create the size array */
+    {$group: 
+     {
+	'_id': {'name':"$_id.name",
+		'colors' : "$colors"},
+	 'sizes': {$push: "$_id.size"}
+     }
+    },
+    /* reshape for beauty */
+    {$project: 
+     {
+	 _id:0,
+	 "name":"$_id.name",
+	 "sizes":1,
+	 "colors": "$_id.colors"
+     }
+    }
+])
+```
 
 
 
