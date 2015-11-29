@@ -126,8 +126,9 @@ new MongoClient(asList(new ServerAddress("localhost", 27017),
 
 # Choosing a Shard Key
 
-
-
+* sufficient cardinality
+* hotspotting in writes - occurs in everything that monotonically increases - because after a while it will end up in last shard
+* 
 
 
 
